@@ -20,8 +20,9 @@ namespace AuctionSite.Core.Entities
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal WalletBalance { get; set; } = 1000.00m;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? LastLogin { get; set; }
 
-  
         public ICollection<Auction> Auctions { get; set; } = new List<Auction>();
         public ICollection<Bid> Bids { get; set; } = new List<Bid>();
     }

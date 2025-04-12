@@ -20,6 +20,18 @@ namespace AuctionSite.Infrastructure.Data
 
             //User
             modelBuilder.Entity<User>()
+            .HasIndex(u => u.Username)
+            .IsUnique();
+
+            modelBuilder.Entity<User>()
+            .HasIndex(u => u.Email)
+            .IsUnique();
+
+            modelBuilder.Entity<User>()
+                .Property(u => u.WalletBalance)
+                .HasDefaultValue(1000.00M);
+
+            modelBuilder.Entity<User>()
                 .HasMany(u => u.Auctions)
                 .WithOne(a => a.Seller)
                 .HasForeignKey(a => a.SellerId)
@@ -37,6 +49,14 @@ namespace AuctionSite.Infrastructure.Data
                 .WithOne(b => b.Auction)
                 .HasForeignKey(b => b.AuctionId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Auction>()
+            .Property(a => a.Status)
+            .HasDefaultValue(AuctionStatus.Active);
+
+            modelBuilder.Entity<Auction>()
+                .Property(a => a.StartDate)
+                .HasDefaultValueSql("GETUTCDATE()");
         }
     }
 }

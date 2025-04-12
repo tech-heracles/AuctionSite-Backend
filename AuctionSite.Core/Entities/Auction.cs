@@ -18,11 +18,11 @@ namespace AuctionSite.Core.Entities
         public decimal StartingPrice { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
-        public decimal CurrentHighestBid { get; set; }
+        public decimal? CurrentHighestBid { get; set; }
 
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
-        public bool IsActive { get; set; } = true;
+        public AuctionStatus Status { get; set; } = AuctionStatus.Active;
 
         // // // // // // // // // // // //
         public int SellerId { get; set; }
@@ -31,5 +31,10 @@ namespace AuctionSite.Core.Entities
         [ForeignKey("SellerId")]
         public User Seller { get; set; }
         public ICollection<Bid> Bids { get; set; } = new List<Bid>();
+    }
+    public enum AuctionStatus
+    {
+        Active,
+        Ended
     }
 }
