@@ -26,7 +26,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
-builder.Logging.AddFile("logs/auction-site-{Date}.log");
+builder.Logging.AddFile(Path.Combine(Directory.GetCurrentDirectory(), "logs/auctionsite-{Date}.log"));
 
 //Swagger
 builder.Services.AddEndpointsApiExplorer();
@@ -80,6 +80,19 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAuctionService, AuctionService>();
+
+//CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", builder =>
+    {
+        builder.AllowAnyOrigin()
+               .AllowAnyMethod()
+               .AllowAnyHeader();
+    });
+});
 
 var app = builder.Build();
 
@@ -93,7 +106,29 @@ if (app.Environment.IsDevelopment())
 app.UseAuthentication();
 app.UseHttpsRedirection();
 app.UseAuthorization();
-app.UseAuthenticationMiddleware();
+app.UseMiddleware<AuthenticationMiddleware>();
+app.MapControllers();
+app.UseCors("AllowAll");
+
+var serviceProvider = app.Services;
+var timerInterval = TimeSpan.FromMinutes(5); // Check every 5 minutes
+
+var timer = new System.Threading.Timer(async _ =>
+{
+    using var scope = serviceProvider.CreateScope();
+    var auctionService = scope.ServiceProvider.GetRequiredService<IAuctionService>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    try
+    {
+        await auctionService.CompleteEndedAuctionsAsync();
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Error in auction completion background service");
+    }
+}, null, TimeSpan.Zero, timerInterval);
+
 app.MapControllers();
 
 app.Run();

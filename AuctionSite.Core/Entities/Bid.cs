@@ -10,7 +10,7 @@ namespace AuctionSite.Core.Entities
         [Column(TypeName = "decimal(18,2)")]
         public decimal Amount { get; set; }
 
-        public DateTime Timestamp { get; set; }
+        public DateTime PlacedAt { get; set; }
 
         // // // // // // // // // // // //
         public int AuctionId { get; set; }

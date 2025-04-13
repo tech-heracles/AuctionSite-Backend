@@ -1,5 +1,6 @@
 ﻿using AuctionSite.Core.DTOs.Auth;
 using AuctionSite.Core.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AuctionSite.API.Controllers
@@ -18,6 +19,7 @@ namespace AuctionSite.API.Controllers
         }
 
         [HttpPost("register")]
+        [AllowAnonymous]
         public async Task<ActionResult<AuthResponseDto>> Register(RegisterDto registerDto)
         {
             _logger.LogInformation("Registration attempt for username: {Username}", registerDto.Username);

@@ -32,12 +32,6 @@ namespace AuctionSite.Infrastructure.Data
                 .HasDefaultValue(1000.00M);
 
             modelBuilder.Entity<User>()
-                .HasMany(u => u.Auctions)
-                .WithOne(a => a.Seller)
-                .HasForeignKey(a => a.SellerId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<User>()
                 .HasMany(u => u.Bids)
                 .WithOne(b => b.Bidder)
                 .HasForeignKey(b => b.BidderId)
@@ -52,11 +46,24 @@ namespace AuctionSite.Infrastructure.Data
 
             modelBuilder.Entity<Auction>()
             .Property(a => a.Status)
-            .HasDefaultValue(AuctionStatus.Active);
+            .HasDefaultValue(true);
 
             modelBuilder.Entity<Auction>()
                 .Property(a => a.StartDate)
                 .HasDefaultValueSql("GETUTCDATE()");
+
+            //Bid
+            modelBuilder.Entity<Bid>()
+                .HasOne(b => b.Auction)
+                .WithMany(a => a.Bids)
+                .HasForeignKey(b => b.AuctionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Bid>()
+                .HasOne(b => b.Bidder)
+                .WithMany(u => u.Bids)
+                .HasForeignKey(b => b.BidderId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

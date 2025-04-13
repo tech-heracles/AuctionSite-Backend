@@ -13,32 +13,43 @@
 
         public async Task InvokeAsync(HttpContext context)
         {
-            // Skip authentication for login and register endpoints
-            if (context.Request.Path.StartsWithSegments("/api/auth"))
+            try
             {
+                _logger.LogInformation("Middleware processing request for {Path}", context.Request.Path);
+
+                if (context.Request.Path.StartsWithSegments("/api/auth") ||
+                    context.Request.Method == "OPTIONS" ||
+                    context.Request.Path.StartsWithSegments("/swagger"))
+                {
+                    _logger.LogInformation("Skipping authentication for {Path}", context.Request.Path);
+                    await _next(context);
+                    return;
+                }
+
+                if (context.User?.Identity?.IsAuthenticated != true)
+                {
+                    _logger.LogWarning("Unauthorized access attempt to {Path}", context.Request.Path);
+                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    await context.Response.WriteAsJsonAsync(new { message = "Unauthorized" });
+                    return;
+                }
+
                 await _next(context);
-                return;
             }
-
-            // Check if user is authenticated
-            if (!context.User.Identity.IsAuthenticated)
+            catch (Exception ex)
             {
-                _logger.LogWarning("Unauthorized access attempt to {Path}", context.Request.Path);
-                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                await context.Response.WriteAsJsonAsync(new { message = "Unauthorized" });
-                return;
+                _logger.LogError(ex, "Error in authentication middleware for {Path}", context.Request.Path);
+
+                if (!context.Response.HasStarted)
+                {
+                    context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                    await context.Response.WriteAsJsonAsync(new { message = "An error occurred" });
+                }
+                else
+                {
+                    throw;
+                }
             }
-
-            await _next(context);
-        }
-    }
-
-    // Extension method to use the middleware
-    public static class AuthenticationMiddlewareExtensions
-    {
-        public static IApplicationBuilder UseAuthenticationMiddleware(this IApplicationBuilder builder)
-        {
-            return builder.UseMiddleware<AuthenticationMiddleware>();
         }
     }
 }
