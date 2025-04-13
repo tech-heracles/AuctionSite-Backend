@@ -27,14 +27,39 @@ namespace AuctionSite.Infrastructure.Services
             _logger = logger;
         }
 
-        public async Task<List<AuctionListItemDto>> GetActiveAuctionsAsync()
+        public async Task<List<AuctionListItemDto>> GetActiveAuctionsAsync(AuctionListFilters auctionFilters = null)
         {
             var currentTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time"));
 
-            var auctions = await _context.Auctions
-                .Where(a => a.EndDate > currentTime && a.Status == true)
-                .OrderBy(a => a.EndDate) // Sorted asc
+            var query = _context.Auctions.Where(a => a.EndDate > currentTime && a.Status == true);
+            if (auctionFilters != null)
+            {
+                if (!string.IsNullOrWhiteSpace(auctionFilters.searchTerm))
+                {
+                    string searchTerm = auctionFilters.searchTerm.ToLower();
+                    query = query.Where(a => a.Title.ToLower().Contains(searchTerm) ||
+                                            a.Description.ToLower().Contains(searchTerm));
+                }
+
+                if (auctionFilters.minPrice > 0)
+                {
+                    query = query.Where(a => a.CurrentHighestBid >= auctionFilters.minPrice);
+                }
+
+                if (auctionFilters.maxPrice > 0)
+                {
+                    query = query.Where(a => a.CurrentHighestBid <= auctionFilters.maxPrice);
+                }
+            }
+
+            var auctions = await query
+                .OrderBy(a => a.EndDate)
                 .ToListAsync();
+
+            //var auctions = await _context.Auctions
+            //    .Where(a => a.EndDate > currentTime && a.Status == true)
+            //    .OrderBy(a => a.EndDate)
+            //    .ToListAsync();
 
             return auctions.Select(a => new AuctionListItemDto
             {

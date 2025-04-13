@@ -24,8 +24,6 @@ namespace AuctionSite.Core.DTOs
 
         [Required]
         public DateTime EndDate { get; set; }
-
-        // Optional image URL
         public string? ImageUrl { get; set; }
     }
 
@@ -56,5 +54,12 @@ namespace AuctionSite.Core.DTOs
         public DateTime EndDate { get; set; }
         public TimeSpan TimeRemaining { get; set; }
         public string SellerUsername { get; set; }
+    }
+
+    public class AuctionListFilters
+    {
+        public string searchTerm { get; set; }
+        public decimal minPrice { get; set; }
+        public decimal maxPrice { get; set; }
     }
 }

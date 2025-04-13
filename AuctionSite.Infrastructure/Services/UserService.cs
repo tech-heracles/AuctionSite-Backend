@@ -58,39 +58,42 @@ namespace AuctionSite.Infrastructure.Services
 
         public async Task<bool> UpdateUserBalanceAsync(int userId, decimal amount)
         {
-            using var transaction = await _context.Database.BeginTransactionAsync();
+            var strategy = _context.Database.CreateExecutionStrategy();
 
-            try
+            return await strategy.ExecuteAsync(async () =>
             {
-                var user = await _context.Users.FindAsync(userId);
-
-                if (user == null)
+                using var transaction = await _context.Database.BeginTransactionAsync();
+                try
                 {
-                    _logger.LogWarning($"User with id {userId} not found when updating balance");
+                    var user = await _context.Users.FindAsync(userId);
+                    if (user == null)
+                    {
+                        _logger.LogWarning($"User with id {userId} not found when updating balance");
+                        return false;
+                    }
+
+                    user.WalletBalance += amount;
+
+                    // Ensure balance doesn't go negative
+                    if (user.WalletBalance < 0)
+                    {
+                        _logger.LogWarning($"Attempted to set negative balance for user {userId}");
+                        return false;
+                    }
+
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    _logger.LogInformation($"Updated user {userId} balance by {amount}, new balance: {user.WalletBalance}");
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    _logger.LogError(ex, $"Error updating balance for user {userId}");
                     return false;
                 }
-
-                user.WalletBalance += amount;
-
-                // Ensure balance doesn't go negative
-                if (user.WalletBalance < 0)
-                {
-                    _logger.LogWarning($"Attempted to set negative balance for user {userId}");
-                    return false;
-                }
-
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
-
-                _logger.LogInformation($"Updated user {userId} balance by {amount}, new balance: {user.WalletBalance}");
-                return true;
-            }
-            catch (Exception ex)
-            {
-                await transaction.RollbackAsync();
-                _logger.LogError(ex, $"Error updating balance for user {userId}");
-                return false;
-            }
+            });
         }
 
         public async Task<bool> TransferFundsAsync(int fromUserId, int toUserId, decimal amount)

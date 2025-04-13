@@ -9,7 +9,7 @@ namespace AuctionSite.Core.Interfaces.Services
 {
     public interface IAuctionService
     {
-        Task<List<AuctionListItemDto>> GetActiveAuctionsAsync();
+        Task<List<AuctionListItemDto>> GetActiveAuctionsAsync(AuctionListFilters auctionFilters);
         Task<AuctionDto> GetAuctionByIdAsync(int id);
         Task<AuctionDto> CreateAuctionAsync(CreateAuctionDto auctionDto, int userId);
         Task<BidDto> PlaceBidAsync(CreateBidDto bidDto, int userId);

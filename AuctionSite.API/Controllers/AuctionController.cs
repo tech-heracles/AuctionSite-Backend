@@ -23,15 +23,14 @@ namespace AuctionSite.API.Controllers
             _logger = logger;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<List<AuctionListItemDto>>> GetActiveAuctions()
+        [HttpPost("active")]
+        public async Task<ActionResult<List<AuctionListItemDto>>> GetActiveAuctions([FromBody] AuctionListFilters auctionFilters)
         {
             try
             {
-                //this could also be done by a scheduled background service
                 await _auctionService.CompleteEndedAuctionsAsync();
 
-                var auctions = await _auctionService.GetActiveAuctionsAsync();
+                var auctions = await _auctionService.GetActiveAuctionsAsync(auctionFilters);
                 return Ok(auctions);
             }
             catch (Exception ex)
