@@ -29,7 +29,7 @@ namespace AuctionSite.Infrastructure.Services
 
         public async Task<List<AuctionListItemDto>> GetActiveAuctionsAsync()
         {
-            var currentTime = DateTime.UtcNow;
+            var currentTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time"));
 
             var auctions = await _context.Auctions
                 .Where(a => a.EndDate > currentTime && a.Status == true)
@@ -49,7 +49,7 @@ namespace AuctionSite.Infrastructure.Services
 
         public async Task<AuctionDto> GetAuctionByIdAsync(int id)
         {
-            var currentTime = DateTime.UtcNow;
+            var currentTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time"));
 
             var auction = await _context.Auctions
                 .Include(a => a.Bids)
@@ -76,7 +76,7 @@ namespace AuctionSite.Infrastructure.Services
                 SellerUsername = auction.SellerUsername,
                 HighestBidderId = auction.HighestBidderId,
                 HighestBidderUsername = auction.HighestBidderUsername,
-                Status = auction.EndDate <= currentTime || auction.Status,
+                Status = auction.EndDate >= currentTime && auction.Status,
                 TimeRemaining = auction.EndDate > currentTime ? auction.EndDate - currentTime : TimeSpan.Zero,
                 Bids = auction.Bids.Select(b => new BidDto
                 {
@@ -92,7 +92,7 @@ namespace AuctionSite.Infrastructure.Services
 
         public async Task<AuctionDto> CreateAuctionAsync(CreateAuctionDto auctionDto, int userId)
         {
-            if (auctionDto.EndDate <= DateTime.UtcNow)
+            if (auctionDto.EndDate <= TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time")))
             {
                 _logger.LogWarning($"User {userId} attempted to create auction with invalid end date");
                 throw new ArgumentException("End date must be in the future");
@@ -111,7 +111,7 @@ namespace AuctionSite.Infrastructure.Services
                 Description = auctionDto.Description,
                 StartingPrice = auctionDto.StartingBid,
                 CurrentHighestBid = auctionDto.StartingBid,
-                StartDate = DateTime.UtcNow,
+                StartDate = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time")),
                 EndDate = auctionDto.EndDate,
                 ImageUrl = auctionDto.ImageUrl,
                 SellerId = userId,
@@ -139,7 +139,7 @@ namespace AuctionSite.Infrastructure.Services
                 HighestBidderId = null,
                 HighestBidderUsername = null,
                 Status = true,
-                TimeRemaining = auction.EndDate - DateTime.UtcNow,
+                TimeRemaining = auction.EndDate - TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time")),
                 Bids = new List<BidDto>()
             };
         }
@@ -158,7 +158,7 @@ namespace AuctionSite.Infrastructure.Services
             }
 
             // Check if auction is still active
-            if (auction.EndDate <= DateTime.UtcNow || auction.Status == false)
+            if (auction.EndDate <= TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time")) || auction.Status == false)
             {
                 _logger.LogWarning($"User {userId} attempted to bid on ended auction {bidDto.AuctionId}");
                 throw new ArgumentException("Auction has ended");
@@ -199,7 +199,7 @@ namespace AuctionSite.Infrastructure.Services
                 AuctionId = bidDto.AuctionId,
                 BidderId = userId,
                 Amount = bidDto.Amount,
-                PlacedAt = DateTime.UtcNow,
+                PlacedAt = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time")),
                 Bidder = bidder
             };
 
@@ -227,7 +227,8 @@ namespace AuctionSite.Infrastructure.Services
 
         public async Task CompleteEndedAuctionsAsync()
         {
-            var currentTime = DateTime.UtcNow;
+            TimeZoneInfo albaniaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time");
+            var currentTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, albaniaTimeZone);
 
             // Find all auctions that have ended but are still marked as active
             var endedAuctions = await _context.Auctions
@@ -268,7 +269,7 @@ namespace AuctionSite.Infrastructure.Services
 
         public async Task<List<AuctionDto>> GetUserAuctionsAsync(int userId)
         {
-            var currentTime = DateTime.UtcNow;
+            var currentTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time"));
 
             var auctions = await _context.Auctions
                 .Include(a => a.Bids)
@@ -307,7 +308,7 @@ namespace AuctionSite.Infrastructure.Services
 
         public async Task<List<AuctionDto>> GetUserBidsAsync(int userId)
         {
-            var currentTime = DateTime.UtcNow;
+            var currentTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time"));
 
             // Find all auctions the user has bid on
             var auctionIds = await _context.Bids

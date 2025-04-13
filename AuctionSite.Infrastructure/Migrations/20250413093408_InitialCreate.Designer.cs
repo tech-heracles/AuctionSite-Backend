@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AuctionSite.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250412193251_InitialCreate")]
+    [Migration("20250413093408_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -33,7 +33,7 @@ namespace AuctionSite.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal?>("CurrentHighestBid")
+                    b.Property<decimal>("CurrentHighestBid")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Description")
@@ -43,8 +43,20 @@ namespace AuctionSite.Infrastructure.Migrations
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("HighestBidderId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("HighestBidderUsername")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("SellerId")
                         .HasColumnType("int");
+
+                    b.Property<string>("SellerUsername")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("StartDate")
                         .ValueGeneratedOnAdd()
@@ -54,19 +66,22 @@ namespace AuctionSite.Infrastructure.Migrations
                     b.Property<decimal>("StartingPrice")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int>("Status")
+                    b.Property<bool>("Status")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0);
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("SellerId");
+                    b.HasIndex("UserId");
 
                     b.ToTable("Auctions");
                 });
@@ -88,7 +103,7 @@ namespace AuctionSite.Infrastructure.Migrations
                     b.Property<int>("BidderId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("Timestamp")
+                    b.Property<DateTime>("PlacedAt")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
@@ -145,13 +160,9 @@ namespace AuctionSite.Infrastructure.Migrations
 
             modelBuilder.Entity("AuctionSite.Core.Entities.Auction", b =>
                 {
-                    b.HasOne("AuctionSite.Core.Entities.User", "Seller")
+                    b.HasOne("AuctionSite.Core.Entities.User", null)
                         .WithMany("Auctions")
-                        .HasForeignKey("SellerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Seller");
+                        .HasForeignKey("UserId");
                 });
 
             modelBuilder.Entity("AuctionSite.Core.Entities.Bid", b =>

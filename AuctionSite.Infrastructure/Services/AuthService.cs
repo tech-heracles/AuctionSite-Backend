@@ -100,7 +100,7 @@ namespace AuctionSite.Infrastructure.Services
             }
 
             // Update last login
-            user.LastLogin = DateTime.UtcNow;
+            user.LastLogin = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time"));
             await _dbContext.SaveChangesAsync();
 
             // Generate JWT token

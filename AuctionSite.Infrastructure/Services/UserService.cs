@@ -1,6 +1,7 @@
 ﻿using AuctionSite.Core.DTOs.Auth;
 using AuctionSite.Core.Interfaces.Services;
 using AuctionSite.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -100,48 +101,52 @@ namespace AuctionSite.Infrastructure.Services
                 throw new ArgumentException("Transfer amount must be positive");
             }
 
-            using var transaction = await _context.Database.BeginTransactionAsync();
+            var strategy = _context.Database.CreateExecutionStrategy();
 
-            try
+            return await strategy.ExecuteAsync(async () =>
             {
-                // First, deduct from sender
-                var fromUser = await _context.Users.FindAsync(fromUserId);
-                if (fromUser == null)
+                using var transaction = await _context.Database.BeginTransactionAsync();
+                try
                 {
-                    _logger.LogWarning($"User with id {fromUserId} not found when transferring funds");
+                    // First, deduct from sender
+                    var fromUser = await _context.Users.FindAsync(fromUserId);
+                    if (fromUser == null)
+                    {
+                        _logger.LogWarning($"User with id {fromUserId} not found when transferring funds");
+                        return false;
+                    }
+
+                    if (fromUser.WalletBalance < amount)
+                    {
+                        _logger.LogWarning($"User {fromUserId} has insufficient funds for transfer: {fromUser.WalletBalance} < {amount}");
+                        return false;
+                    }
+
+                    fromUser.WalletBalance -= amount;
+
+                    // Then, add to receiver
+                    var toUser = await _context.Users.FindAsync(toUserId);
+                    if (toUser == null)
+                    {
+                        _logger.LogWarning($"User with id {toUserId} not found when transferring funds");
+                        return false;
+                    }
+
+                    toUser.WalletBalance += amount;
+
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    _logger.LogInformation($"Transferred {amount} from user {fromUserId} to user {toUserId}");
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    _logger.LogError(ex, $"Error transferring funds from user {fromUserId} to user {toUserId}");
                     return false;
                 }
-
-                if (fromUser.WalletBalance < amount)
-                {
-                    _logger.LogWarning($"User {fromUserId} has insufficient funds for transfer: {fromUser.WalletBalance} < {amount}");
-                    return false;
-                }
-
-                fromUser.WalletBalance -= amount;
-
-                // Then, add to receiver
-                var toUser = await _context.Users.FindAsync(toUserId);
-                if (toUser == null)
-                {
-                    _logger.LogWarning($"User with id {toUserId} not found when transferring funds");
-                    return false;
-                }
-
-                toUser.WalletBalance += amount;
-
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
-
-                _logger.LogInformation($"Transferred {amount} from user {fromUserId} to user {toUserId}");
-                return true;
-            }
-            catch (Exception ex)
-            {
-                await transaction.RollbackAsync();
-                _logger.LogError(ex, $"Error transferring funds from user {fromUserId} to user {toUserId}");
-                return false;
-            }
+            });
         }
     }
-}
+ }

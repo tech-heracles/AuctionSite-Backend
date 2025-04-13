@@ -19,51 +19,40 @@ namespace AuctionSite.Infrastructure.Data
             base.OnModelCreating(modelBuilder);
 
             //User
-            modelBuilder.Entity<User>()
-            .HasIndex(u => u.Username)
-            .IsUnique();
-
-            modelBuilder.Entity<User>()
-            .HasIndex(u => u.Email)
-            .IsUnique();
-
-            modelBuilder.Entity<User>()
-                .Property(u => u.WalletBalance)
-                .HasDefaultValue(1000.00M);
-
-            modelBuilder.Entity<User>()
-                .HasMany(u => u.Bids)
-                .WithOne(b => b.Bidder)
-                .HasForeignKey(b => b.BidderId)
-                .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.HasIndex(u => u.Username).IsUnique();
+                entity.HasIndex(u => u.Email).IsUnique();
+                entity.Property(u => u.WalletBalance)
+                     .HasColumnType("decimal(18,2)")
+                     .HasDefaultValue(1000.00M);
+                entity.HasMany(u => u.Bids)
+                     .WithOne(b => b.Bidder)
+                     .HasForeignKey(b => b.BidderId)
+                     .OnDelete(DeleteBehavior.Restrict);
+            });
 
             //Auction
-            modelBuilder.Entity<Auction>()
-                .HasMany(a => a.Bids)
-                .WithOne(b => b.Auction)
-                .HasForeignKey(b => b.AuctionId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<Auction>()
-            .Property(a => a.Status)
-            .HasDefaultValue(true);
-
-            modelBuilder.Entity<Auction>()
-                .Property(a => a.StartDate)
-                .HasDefaultValueSql("GETUTCDATE()");
+            modelBuilder.Entity<Auction>(entity =>
+            {
+                entity.HasMany(a => a.Bids)
+                     .WithOne(b => b.Auction)
+                     .HasForeignKey(b => b.AuctionId)
+                     .OnDelete(DeleteBehavior.Cascade);
+                entity.Property(a => a.Status)
+                     .HasDefaultValue(true);
+                entity.Property(a => a.StartDate)
+                     .HasDefaultValueSql("GETUTCDATE()");
+                entity.Property(a => a.StartingPrice)
+                     .HasColumnType("decimal(18,2)");
+            });
 
             //Bid
-            modelBuilder.Entity<Bid>()
-                .HasOne(b => b.Auction)
-                .WithMany(a => a.Bids)
-                .HasForeignKey(b => b.AuctionId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<Bid>()
-                .HasOne(b => b.Bidder)
-                .WithMany(u => u.Bids)
-                .HasForeignKey(b => b.BidderId)
-                .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<Bid>(entity =>
+            {
+                entity.Property(b => b.Amount)
+                     .HasColumnType("decimal(18,2)");
+            });
         }
     }
 }

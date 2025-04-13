@@ -38,21 +38,25 @@ namespace AuctionSite.Infrastructure.Migrations
                     Title = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     StartingPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    CurrentHighestBid = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    CurrentHighestBid = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     StartDate = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
                     EndDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Status = table.Column<int>(type: "int", nullable: false, defaultValue: 0),
-                    SellerId = table.Column<int>(type: "int", nullable: false)
+                    ImageUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Status = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
+                    SellerId = table.Column<int>(type: "int", nullable: false),
+                    SellerUsername = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    HighestBidderId = table.Column<int>(type: "int", nullable: true),
+                    HighestBidderUsername = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    UserId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Auctions", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Auctions_Users_SellerId",
-                        column: x => x.SellerId,
+                        name: "FK_Auctions_Users_UserId",
+                        column: x => x.UserId,
                         principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -62,7 +66,7 @@ namespace AuctionSite.Infrastructure.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    PlacedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     AuctionId = table.Column<int>(type: "int", nullable: false),
                     BidderId = table.Column<int>(type: "int", nullable: false)
                 },
@@ -84,9 +88,9 @@ namespace AuctionSite.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Auctions_SellerId",
+                name: "IX_Auctions_UserId",
                 table: "Auctions",
-                column: "SellerId");
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Bids_AuctionId",
