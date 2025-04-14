@@ -112,20 +112,20 @@ namespace AuctionSite.Infrastructure.Services
                 try
                 {
                     // First, deduct from sender
-                    var fromUser = await _context.Users.FindAsync(fromUserId);
-                    if (fromUser == null)
-                    {
-                        _logger.LogWarning($"User with id {fromUserId} not found when transferring funds");
-                        return false;
-                    }
+                    //var fromUser = await _context.Users.FindAsync(fromUserId);
+                    //if (fromUser == null)
+                    //{
+                    //    _logger.LogWarning($"User with id {fromUserId} not found when transferring funds");
+                    //    return false;
+                    //}
 
-                    if (fromUser.WalletBalance < amount)
-                    {
-                        _logger.LogWarning($"User {fromUserId} has insufficient funds for transfer: {fromUser.WalletBalance} < {amount}");
-                        return false;
-                    }
+                    //if (fromUser.WalletBalance < amount)
+                    //{
+                    //    _logger.LogWarning($"User {fromUserId} has insufficient funds for transfer: {fromUser.WalletBalance} < {amount}");
+                    //    return false;
+                    //}
 
-                    fromUser.WalletBalance -= amount;
+                    //fromUser.WalletBalance -= amount;
 
                     // Then, add to receiver
                     var toUser = await _context.Users.FindAsync(toUserId);

@@ -228,6 +228,11 @@ namespace AuctionSite.Infrastructure.Services
                 Bidder = bidder
             };
 
+            //return funds to the last bider if he exists
+            if (auction.HighestBidderId.HasValue && auction.CurrentHighestBid > 0)
+            {
+                await _userService.UpdateUserBalanceAsync((int)auction.HighestBidderId, auction.CurrentHighestBid);
+            }
             // Update the auction with the new highest bid
             auction.CurrentHighestBid = bidDto.Amount;
             auction.HighestBidderId = userId;
@@ -236,6 +241,9 @@ namespace AuctionSite.Infrastructure.Services
             // Save the changes
             _context.Bids.Add(bid);
             await _context.SaveChangesAsync();
+
+            //remove funds from bider
+            await _userService.UpdateUserBalanceAsync(userId, -bidDto.Amount);
 
             _logger.LogInformation($"User {userId} placed a bid of {bidDto.Amount} on auction {bidDto.AuctionId}");
 
